@@ -165,8 +165,8 @@ resource "aws_instance" "harbor" {
       "sudo apt-get update",
       "sudo apt-get dist-upgrade -y",
       "sudo apt-get install -y docker.io",
-      "sudo apt-get install -y docker-compose",
-      "sudo apt-get install -y nfs-common",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y docker-compose",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y nfs-common",
       "sudo mkdir -p /services/harbor",
       "echo ${aws_efs_file_system.harbor_application_storage.dns_name}:/ /services/harbor nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,norecvport,nofail 0 0 | sudo tee -a /etc/fstab",
       "sudo mount /services/harbor"
