@@ -151,13 +151,16 @@ resource "aws_instance" "harbor" {
 
   tags = {
     Name = "harbor-production"
-    # SDP_1737_5957 = "sdp_070941167498" # AppGate TODO, add appgate tag
+    SDP_1839_6408 = "sdp_461479555057"
   }
 
   connection {
     type = "ssh"
     user = "admin"
     host = self.public_ip
+    bastion_host = "vg-cinc"
+    bastion_user = var.bastion_user
+    agent = true
   }
 
   provisioner "remote-exec" {

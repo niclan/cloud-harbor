@@ -1,8 +1,3 @@
-variable "ssh_key" {
-  type = string
-  default = "harbor-init"
-}
-
 variable "bastion_user" {
   type = string
   description = "Username for bastion host login"
