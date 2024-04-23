@@ -1,3 +1,8 @@
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/.terraform
+.emacs*
+
 # History files
 .Rhistory
 .Rapp.history
@@ -38,6 +43,3 @@ rsconnect/
 # Do not want HTML files
 *.html
 
-terraform/*.tfstate
-terraform/*.tfstate.backup
-terraform/.terraform
