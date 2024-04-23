@@ -74,7 +74,7 @@ resource "aws_security_group" "harbor_sg" {
     from_port = 22
     to_port = 22
     protocol = "tcp"
-    cidr_blocks = ["13.48.61.7/32", "13.48.80.55/32", "80.91.33.0/24", "84.213.244.44/32" ]
+    cidr_blocks = ["13.48.61.7/32", "13.48.80.55/32", "80.91.33.0/24" ]
     description = "Appgate SSH access to Harbor EC2 instance."
   }
 
@@ -140,6 +140,20 @@ resource "aws_instance" "harbor" {
   vpc_security_group_ids = [aws_security_group.harbor_sg.id]
   subnet_id = aws_subnet.public_subnet_1a.id
 
+  user_data = <<-EOF
+              #!/bin/bash
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update
+              apt-get dist-upgrade -y
+              apt-get install -y docker.io
+              apt-get install -y docker-compose
+              apt-get install -y nfs-common
+              mkdir -p /services/harbor
+              echo ${aws_efs_file_system.harbor_application_storage.dns_name}:/ /services/harbor nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,nofail 0 0 | tee -a /etc/fstab
+              systemctl daemon-reload
+              mount /services/harbor
+              EOF
+
   root_block_device {
     volume_size = 30
   }
@@ -154,28 +168,6 @@ resource "aws_instance" "harbor" {
     SDP_1839_6408 = "sdp_461479555057"
   }
 
-  connection {
-    type = "ssh"
-    user = "admin"
-    host = self.public_ip
-  #  bastion_host = "vg-cinc"
-  #  bastion_user = var.bastion_user
-    agent = true
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo apt-get update",
-      "sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y",
-      "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y docker.io",
-      "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y docker-compose",
-      "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y nfs-common",
-      "sudo mkdir -p /services/harbor",
-      "echo ${aws_efs_file_system.harbor_application_storage.dns_name}:/ /services/harbor nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,nofail 0 0 | sudo tee -a /etc/fstab",
-      "sudo systemctl daemon-reload",
-      "sudo mount /services/harbor"
-    ]
-  }
 }
 
 resource "aws_eip" "harbor" {
