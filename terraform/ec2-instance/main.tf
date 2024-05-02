@@ -147,6 +147,8 @@ resource "aws_instance" "harbor" {
               apt-get dist-upgrade -y
               apt-get install -y docker.io
               apt-get install -y docker-compose
+              apt-get install -y nginx
+              apt-get install -y acmetool
               apt-get install -y nfs-common
               mkdir -p /services/harbor
               echo ${aws_efs_file_system.harbor_application_storage.dns_name}:/ /services/harbor nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,nofail 0 0 | tee -a /etc/fstab
