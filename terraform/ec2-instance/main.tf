@@ -1,6 +1,6 @@
 # VPC
 resource "aws_vpc" "public_vpc" {
-  cidr_block = "10.42.0.0/24"
+  cidr_block = var.vpc_cidr
   enable_dns_hostnames = true
 
   tags = {
@@ -9,14 +9,14 @@ resource "aws_vpc" "public_vpc" {
 }
 
 # Subnet
-resource "aws_subnet" "public_subnet_1a" {
-  availability_zone = "eu-north-1a"
-  cidr_block = "10.42.0.0/26"
+resource "aws_subnet" "public_subnet_1c" {
+  availability_zone = "${var.region}c"
+  cidr_block = var.subnet1c_cidr
   vpc_id = aws_vpc.public_vpc.id
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "harbor-public-subnet-1a"
+    Name = "harbor-public-subnet-1c"
   }
 }
 
@@ -46,22 +46,6 @@ resource "aws_main_route_table_association" "main_route_table" {
 }
 
 
-resource "aws_security_group" "harbor_efs_sg" {
-  name = "harbor_efs_sg"
-  description = "Security group for harbor EFS"
-
-  vpc_id = aws_vpc.public_vpc.id
-
-  # NFS
-  ingress {
-    from_port = 2049
-    to_port = 2049
-    protocol = "tcp"
-    cidr_blocks = [aws_vpc.public_vpc.cidr_block]
-    description = "NFS access to Harbor EFS."
-  }
-}
-
 # Security group for EC2 instance.
 resource "aws_security_group" "harbor_sg" {
   name = "harbor_sg"
@@ -74,7 +58,7 @@ resource "aws_security_group" "harbor_sg" {
     from_port = 22
     to_port = 22
     protocol = "tcp"
-    cidr_blocks = ["13.48.61.7/32", "13.48.80.55/32", "80.91.33.0/24" ]
+    cidr_blocks = var.allowed_cidr_blocks
     description = "Appgate SSH access to Harbor EC2 instance."
   }
 
@@ -92,7 +76,7 @@ resource "aws_security_group" "harbor_sg" {
     from_port = 443
     to_port = 443
     protocol = "tcp"
-    cidr_blocks = ["13.48.61.7/32", "13.48.80.55/32", "80.91.33.0/24"]
+    cidr_blocks = var.allowed_cidr_blocks
     description = "Appgate HTTPS access to Harbor EC2 instance."
   }
 
@@ -115,45 +99,36 @@ resource "aws_security_group" "harbor_sg" {
 }
 
 
-resource "aws_efs_file_system" "harbor_application_storage" {
-  creation_token = "harbor-application-storage"
-  encrypted = true
-  performance_mode = "generalPurpose"
-  tags = {
-    Name = "harbor-application-storage"
-  }
-}
-
-
-resource "aws_efs_mount_target" "harbor_application_mount_target_eu_north_1a" {
-  file_system_id = aws_efs_file_system.harbor_application_storage.id
-  subnet_id = aws_subnet.public_subnet_1a.id
-  security_groups = [aws_security_group.harbor_efs_sg.id]
-}
-
 
 # EC2 instance.
 resource "aws_instance" "harbor" {
   instance_type = "t3.medium"   # 4GB RAM, 2 vCPUs
-  ami = "ami-0506d6d51f1916a96" # Debian 12
+  ami = data.aws_ami.bitnami_harbor.id
   key_name = var.ssh_key
   vpc_security_group_ids = [aws_security_group.harbor_sg.id]
-  subnet_id = aws_subnet.public_subnet_1a.id
+  subnet_id = aws_subnet.public_subnet_1c.id
 
   user_data = <<-EOF
               #!/bin/bash
+              set -e
               export DEBIAN_FRONTEND=noninteractive
+              export AWS_DEFAULT_REGION=${var.region}
               apt-get update
               apt-get dist-upgrade -y
               apt-get install -y docker.io
               apt-get install -y docker-compose
               apt-get install -y nginx
               apt-get install -y acmetool
-              apt-get install -y nfs-common
-              mkdir -p /services/harbor
-              echo ${aws_efs_file_system.harbor_application_storage.dns_name}:/ /services/harbor nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,nofail 0 0 | tee -a /etc/fstab
-              systemctl daemon-reload
-              mount /services/harbor
+              mkdir -p /var/cinc /root/.cinc
+
+              AWS_ACCESS_KEY_ID=${data.terraform_remote_state.s3_chef_solo.outputs.s3_access_key} \
+              AWS_SECRET_ACCESS_KEY=${data.terraform_remote_state.s3_chef_solo.outputs.s3_secret_key} \
+                aws s3 cp s3://${data.terraform_remote_state.s3_chef_solo.outputs.s3_bucket}/cinc-repo.tar.gz - | tar -xzC /var/cinc
+
+              ln -s /var/cinc/dot-cinc/knife.rb /root/.cinc/knife.rb
+
+              cinc-solo -o 'role[ec2]'
+
               EOF
 
   root_block_device {
@@ -169,7 +144,6 @@ resource "aws_instance" "harbor" {
     Name = "harbor-production"
     SDP_1839_6408 = "sdp_461479555057"
   }
-
 }
 
 resource "aws_eip" "harbor" {
@@ -181,4 +155,3 @@ resource "aws_eip" "harbor" {
     Name = "harbor-eip"
   }
 }
-
