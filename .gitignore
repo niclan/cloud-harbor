@@ -1,7 +1,12 @@
-terraform/*.tfstate
-terraform/*.tfstate.backup
-terraform/.terraform
 .emacs*
 *~
 \#*\#
 .\#*
+
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
