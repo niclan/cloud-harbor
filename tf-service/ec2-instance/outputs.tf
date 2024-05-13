@@ -10,5 +10,5 @@ output "public_vpc_id" {
 
 output "subnet_ids" {
   description = "List of subnets"
-  value = [aws_subnet.public_subnet_1a.id]
+  value = [aws_subnet.public_subnet_1c.id]
 }

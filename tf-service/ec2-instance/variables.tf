@@ -3,7 +3,6 @@ variable "vpc_cidr" {
   default = "10.42.0.0/24"
 }
 
-
 variable "subnet1c_cidr" {
   type = string
   default = "10.42.0.0/26"
@@ -25,12 +24,6 @@ variable "ssh_key" {
   default = "harbor-init"
 }
 
-variable "bastion_user" {
-  type = string
-  description = "Username for bastion host login"
-  default = "admin"
-}
-
 data "terraform_remote_state" "s3_chef_solo" {
   # The state bucket is always in eu-north-1
   backend = "s3"
@@ -41,12 +34,21 @@ data "terraform_remote_state" "s3_chef_solo" {
   }
 }
 
-data "aws_ami" "bitnami_harbor" {
-  most_recent = true
-  owners = ["Bitnami by VMware"]
-  filter {
-    name = "name"
-    values = ["harbor"]
+data "terraform_remote_state" "s3_harbor" {
+  # The state buckets are always in eu-north-1
+  backend = "s3"
+  config = {
+    bucket = "mpt-ops-pro-tf-state-bucket"
+    key    = "harbor/s3"
+    region = "eu-north-1"
   }
 }
 
+data "aws_ami" "debian" {
+  most_recent = true
+  owners = ["136693071363"]
+  filter {
+    name = "name"
+    values = ["debian-12-amd64-*"]
+  }
+}
