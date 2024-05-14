@@ -175,18 +175,15 @@ resource "aws_instance" "harbor" {
               export AWS_DEFAULT_REGION=${var.region}
               apt-get update
               apt-get dist-upgrade -y
-              apt-get install -y docker.io
-              apt-get install -y docker-compose
-              apt-get install -y nginx
-              apt-get install -y acmetool
               mkdir -p /var/cinc /root/.cinc
-
+              curl -L https://omnitruck.cinc.sh/install.sh | sudo bash -s -- -v 17
               aws s3 cp s3://${data.terraform_remote_state.s3_chef_solo.outputs.s3_bucket}/cinc-repo.tar.gz - | tar -xzC /var/cinc
               ln -s /var/cinc/dot-cinc/knife.rb /root/.cinc/knife.rb
-              # cinc-solo -o 'role[ec2]'
+              cinc-solo -o 'role[ec2]'
               EOF
 
   root_block_device {
+    encrypted = true
     volume_size = 30
   }
 
