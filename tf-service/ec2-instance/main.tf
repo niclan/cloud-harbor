@@ -182,11 +182,8 @@ resource "aws_instance" "harbor" {
               mkdir -p /var/cinc /root/.cinc
 
               aws s3 cp s3://${data.terraform_remote_state.s3_chef_solo.outputs.s3_bucket}/cinc-repo.tar.gz - | tar -xzC /var/cinc
-
               ln -s /var/cinc/dot-cinc/knife.rb /root/.cinc/knife.rb
-
-              cinc-solo -o 'role[ec2]'
-
+              # cinc-solo -o 'role[ec2]'
               EOF
 
   root_block_device {
