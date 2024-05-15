@@ -9,9 +9,24 @@ variable "subnet1c_cidr" {
 }
 
 
-variable "allowed_cidr_blocks" {
+variable "allowed_cidr_blocks_registry" {
   type = list(string)
-  default = ["13.48.61.7/32", "13.48.80.55/32", "80.91.33.0/24"]
+  default = [
+    "13.48.61.7/32", "13.48.80.55/32", # Appgate
+    "80.91.33.0/24", # VG data center
+    "13.49.209.19/32", "13.51.155.50/32", "16.170.78.245/32", # Developer foundations Github runners
+    "16.170.160.240/32", "51.20.112.181/32", "51.20.179.2/32", # vg-lab-pro-1
+    "35.189.224.153/32", "35.195.116.134/32", "35.195.87.41/32" # vg-ops-pro-1
+  ]
+}
+
+
+variable "allowed_cidr_blocks_ssh" {
+  type = list(string)
+  default = [
+    "13.48.61.7/32", "13.48.80.55/32", # Appgate
+    "80.91.33.0/24" # VG data center
+  ]
 }
 
 variable "region" {

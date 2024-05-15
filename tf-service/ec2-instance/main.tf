@@ -56,7 +56,7 @@ resource "aws_security_group" "harbor_sg" {
     from_port = 22
     to_port = 22
     protocol = "tcp"
-    cidr_blocks = var.allowed_cidr_blocks
+    cidr_blocks = var.allowed_cidr_blocks_ssh
     description = "Appgate SSH access to Harbor EC2 instance."
   }
 
@@ -74,7 +74,7 @@ resource "aws_security_group" "harbor_sg" {
     from_port = 443
     to_port = 443
     protocol = "tcp"
-    cidr_blocks = var.allowed_cidr_blocks
+    cidr_blocks = var.allowed_cidr_blocks_registry
     description = "Appgate HTTPS access to Harbor EC2 instance."
   }
 
