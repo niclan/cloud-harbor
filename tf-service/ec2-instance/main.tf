@@ -159,9 +159,6 @@ resource "aws_instance" "harbor" {
   iam_instance_profile = "harbor-ec2-instance-profile"
   #  instance_type = "t3.medium"   # 4GB RAM, 2 vCPUs
 
-  # t3a.small is recommended by vendor, but not available in eu-north-1
-  # so t3.snall is used instead. Don't know if this is enough RAM for good
-  # performance.
   instance_type = "t3.small"   # 2GB RAM, 2 vCPUs
   ami = data.aws_ami.debian.id
   key_name = var.ssh_key
@@ -170,6 +167,7 @@ resource "aws_instance" "harbor" {
 
   user_data = <<-EOF
               #!/bin/bash
+              exec &> /var/log/user-data.log
               set -e
               export DEBIAN_FRONTEND=noninteractive
               export AWS_DEFAULT_REGION=${var.region}
@@ -180,6 +178,7 @@ resource "aws_instance" "harbor" {
               aws s3 cp s3://${data.terraform_remote_state.s3_chef_solo.outputs.s3_bucket}/cinc-repo.tar.gz - | tar -xzC /var/cinc
               ln -s /var/cinc/dot-cinc/knife.rb /root/.cinc/knife.rb
               cinc-solo -o 'role[ec2]'
+              echo END OF USER DATA
               EOF
 
   root_block_device {

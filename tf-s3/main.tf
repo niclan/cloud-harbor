@@ -92,6 +92,43 @@ resource "aws_s3_bucket_policy" "bucket" {
   policy = data.aws_iam_policy_document.s3_policy_doc.json
 }
 
+
+resource "aws_s3_bucket_lifecycle_configuration" "harbor_s3_lifecycle" {
+  bucket = aws_s3_bucket.bucket.bucket
+
+  rule {
+    id = "Limit pg backups"
+    status = "Enabled"
+    filter {
+      prefix = "pgbackups/"
+    }
+    expiration {
+      days = 7
+    }
+    noncurrent_version_expiration {
+      noncurrent_days = 1
+      newer_noncurrent_versions = 3
+    }
+  }
+
+  rule {
+    id = "Cleanup incomplete uploads"
+    status = "Enabled"
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 2
+    }
+  }
+}
+
+
+resource "aws_s3_bucket_versioning" "bucket" {
+  bucket = aws_s3_bucket.bucket.bucket
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+
 resource "aws_s3_bucket" "bucket" {
   bucket = "harbor-reeneepeid9n"
 }
