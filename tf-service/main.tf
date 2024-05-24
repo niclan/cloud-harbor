@@ -5,6 +5,7 @@ provider "aws" {
     tags = {
       billed-service = "harbor"
       billed-team = "vg-ops"
+      terraformed = "https://github.schibsted.io/vg/cloud-harbor"
     }
   }
 }

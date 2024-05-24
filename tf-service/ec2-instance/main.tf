@@ -75,10 +75,10 @@ resource "aws_security_group" "harbor_sg" {
     to_port = 443
     protocol = "tcp"
     cidr_blocks = var.allowed_cidr_blocks_registry
-    description = "Appgate HTTPS access to Harbor EC2 instance."
+    description = "Allow HTTPS access to Harbor EC2 instance from Appgate and VG environments."
   }
 
-
+  # Any access from VG data center.
   ingress {
     from_port = 0
     to_port = 0
