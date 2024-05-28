@@ -46,28 +46,11 @@ resource "aws_main_route_table_association" "main_route_table" {
 
 # Some private resources
 
-resource "aws_subnet" "private_subnet_1c" {
-  availability_zone = "${var.region}c"
-  cidr_block = var.subnet1c_cidr_priv
-  vpc_id = aws_vpc.public_vpc.id
-  map_public_ip_on_launch = false
-
-  tags = {
-    Name = "harbor-private-subnet-1c"
-  }
-}
-
-resource "aws_route_table" "private_route" {
-  vpc_id = aws_vpc.public_vpc.id
-  tags = {
-    Name = "harbor-private-route"
-  }
-}
-
+# VPC endpoint for S3.
 resource "aws_vpc_endpoint" "s3_endpoint" {
   vpc_id = aws_vpc.public_vpc.id
   service_name = "com.amazonaws.${var.region}.s3"
-  route_table_ids = [aws_route_table.private_route.id]
+  route_table_ids = [aws_route_table.default_route.id]
   policy = <<-POLICY
   {
      "Version": "2008-10-17",
