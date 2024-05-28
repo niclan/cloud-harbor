@@ -1,4 +1,4 @@
- # VPC
+ # VPC - the VPC itself is not really public or private, the subnets are.
 resource "aws_vpc" "public_vpc" {
   cidr_block = var.vpc_cidr
   enable_dns_hostnames = true
@@ -42,6 +42,45 @@ resource "aws_route_table" "default_route" {
 resource "aws_main_route_table_association" "main_route_table" {
   vpc_id = aws_vpc.public_vpc.id
   route_table_id = aws_route_table.default_route.id
+}
+
+# Some private resources
+
+resource "aws_subnet" "private_subnet_1c" {
+  availability_zone = "${var.region}c"
+  cidr_block = var.subnet1c_cidr_priv
+  vpc_id = aws_vpc.public_vpc.id
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "harbor-private-subnet-1c"
+  }
+}
+
+resource "aws_route_table" "private_route" {
+  vpc_id = aws_vpc.public_vpc.id
+  tags = {
+    Name = "harbor-private-route"
+  }
+}
+
+resource "aws_vpc_endpoint" "s3_endpoint" {
+  vpc_id = aws_vpc.public_vpc.id
+  service_name = "com.amazonaws.${var.region}.s3"
+  route_table_ids = [aws_route_table.private_route.id]
+  policy = <<-POLICY
+  {
+     "Version": "2008-10-17",
+     "Statement": [
+         {
+             "Effect": "Allow",
+             "Principal": "*",
+             "Action": "*",
+             "Resource": "*"
+         }
+     ]
+  }
+  POLICY
 }
 
 # Security group for EC2 instance.
@@ -98,7 +137,7 @@ resource "aws_security_group" "harbor_sg" {
 
 # Policy for EC2 instance to be able to access s3 for chef-solo and
 # harbor.  The receiving buckets have policies that are more
-# restrictive and apropriate for each of them.
+
 
 data "aws_iam_policy_document" "harbor_policy" {
   statement {
