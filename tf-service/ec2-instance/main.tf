@@ -51,19 +51,6 @@ resource "aws_vpc_endpoint" "s3_endpoint" {
   vpc_id = aws_vpc.public_vpc.id
   service_name = "com.amazonaws.${var.region}.s3"
   route_table_ids = [aws_route_table.default_route.id]
-  policy = <<-POLICY
-  {
-     "Version": "2008-10-17",
-     "Statement": [
-         {
-             "Effect": "Allow",
-             "Principal": "*",
-             "Action": "*",
-             "Resource": "*"
-         }
-     ]
-  }
-  POLICY
 }
 
 # Security group for EC2 instance.

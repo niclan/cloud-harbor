@@ -8,12 +8,6 @@ variable "subnet1c_cidr" {
   default = "10.42.0.0/26"
 }
 
-variable "subnet1c_cidr_priv" {
-  type = string
-  default = "10.42.0.128/26"
-}
-
-
 variable "allowed_cidr_blocks_registry" {
   type = list(string)
   default = [
