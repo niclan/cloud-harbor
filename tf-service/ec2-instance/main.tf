@@ -158,6 +158,11 @@ resource "aws_iam_role_policy_attachment" "harbor_policy_attachment" {
   policy_arn = aws_iam_policy.harbor_policy.arn
 }
 
+resource "aws_iam_role_policy_attachment" "harbor_ssm_attachment" {
+  role = aws_iam_role.harbor_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 resource "aws_iam_instance_profile" "harbor-ec2-instance-profile" {
   name = "harbor-ec2-instance-profile"
   role = aws_iam_role.harbor_role.name
@@ -182,6 +187,8 @@ resource "aws_instance" "harbor" {
               export AWS_DEFAULT_REGION=${var.region}
               apt-get update
               apt-get dist-upgrade -y
+              wget -q https://s3.$AWS_DEFAULT_REGION.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb
+              dpkg -i amazon-ssm-agent.deb
               mkdir -p /var/cinc /root/.cinc
               curl -L https://omnitruck.cinc.sh/install.sh | sudo bash -s -- -v 17
               aws s3 cp s3://${data.terraform_remote_state.s3_chef_solo.outputs.s3_bucket}/cinc-repo.tar.gz - | tar -xzC /var/cinc
